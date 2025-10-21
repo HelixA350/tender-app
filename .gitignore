@@ -1,0 +1,4 @@
+/venv
+vectorstore/
+result.json
+.env
