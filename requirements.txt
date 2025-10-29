@@ -6,6 +6,7 @@ anyio==4.11.0
 attrs==25.4.0
 backoff==2.2.1
 bcrypt==5.0.0
+blinker==1.9.0
 build==1.3.0
 cachetools==6.2.1
 certifi==2025.10.5
@@ -18,6 +19,8 @@ dataclasses-json==0.6.7
 distro==1.9.0
 durationpy==0.10
 filelock==3.20.0
+files_loader @ git+https://github.com/HelixA350/tender_data_loader.git@326d8dcfd54e61524e6ba5195e0f5781afc2d8fd
+Flask==3.1.2
 flatbuffers==25.9.23
 frozenlist==1.8.0
 fsspec==2025.9.0
@@ -36,6 +39,7 @@ humanfriendly==10.0
 idna==3.11
 importlib_metadata==8.7.0
 importlib_resources==6.5.2
+itsdangerous==2.2.0
 Jinja2==3.1.6
 joblib==1.5.2
 jsonpatch==1.33
@@ -128,6 +132,7 @@ uvicorn==0.38.0
 watchfiles==1.1.1
 websocket-client==1.9.0
 websockets==15.0.1
+Werkzeug==3.1.3
 xxhash==3.6.0
 yarl==1.22.0
 zipp==3.23.0

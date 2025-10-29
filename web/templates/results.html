@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Результаты анализа тендера</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #e9ecfa;
+      color: #1f2937;
+      padding: 20px;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(to right, #667eea, #764ba2);
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: #1f2937;
+      font-weight: 700;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border-radius: 10px;
+      background-color: #f9fafb;
+      border-left: 4px solid #667eea;
+    }
+    .section-title {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #374151;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+    .section-title i {
+      margin-right: 10px;
+      color: #667eea;
+    }
+    .field {
+      margin-bottom: 15px;
+    }
+    .field-label {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #4b5563;
+    }
+    .field-value {
+      padding: 12px 15px;
+      background-color: white;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .list-item {
+      padding: 10px 15px;
+      margin-bottom: 8px;
+      background-color: white;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      display: flex;
+      align-items: flex-start;
+    }
+    .list-item:before {
+      content: '•';
+      color: #667eea;
+      font-weight: bold;
+      margin-right: 10px;
+      font-size: 18px;
+    }
+    .actions {
+      display: flex;
+      gap: 15px;
+      margin-top: 30px;
+    }
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary {
+      background-color: #667eea;
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-secondary {
+      background-color: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    .btn-secondary:hover {
+      background-color: #e5e7eb;
+    }
+    @media (max-width: 600px) {
+      .container {
+        padding: 24px;
+      }
+      h1 {
+        font-size: 22px;
+      }
+      .actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+  <div class="container">
+    <h1><i class="fas fa-chart-bar"></i> Результаты анализа тендера</h1>
+    
+    <div class="section">
+      <div class="section-title">
+        <i class="fas fa-info-circle"></i> Основная информация
+      </div>
+      
+      <div class="field">
+        <div class="field-label">Тип тендера</div>
+        <div class="field-value">{{ analysis_results.tender_type or "Не указано" }}</div>
+      </div>
+      
+      <div class="field">
+        <div class="field-label">Бюджет</div>
+        <div class="field-value">{{ analysis_results.budget or "Не указано" }}</div>
+      </div>
+      
+      <div class="field">
+        <div class="field-label">Сроки выполнения</div>
+        <div class="field-value">{{ analysis_results.deadlines or "Не указано" }}</div>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div class="section-title">
+        <i class="fas fa-list-check"></i> Ключевые требования
+      </div>
+      
+      {% if analysis_results.key_requirements %}
+        {% for requirement in analysis_results.key_requirements %}
+          <div class="list-item">{{ requirement }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="field-value">Требования не указаны</div>
+      {% endif %}
+    </div>
+    
+    <div class="section">
+      <div class="section-title">
+        <i class="fas fa-cogs"></i> Технические спецификации
+      </div>
+      
+      {% if analysis_results.technical_specs %}
+        {% for spec in analysis_results.technical_specs %}
+          <div class="list-item">{{ spec }}</div>
+        {% endfor %}
+      {% else %}
+        <div class="field-value">Технические спецификации не указаны</div>
+      {% endif %}
+    </div>
+    
+    <!-- Динамические поля - для любых других данных, которые могут прийти -->
+    {% for key, value in analysis_results.items() %}
+      {% if key not in ['tender_type', 'budget', 'deadlines', 'key_requirements', 'technical_specs'] %}
+        <div class="section">
+          <div class="section-title">
+            <i class="fas fa-file-alt"></i> {{ key|replace('_', ' ')|title }}
+          </div>
+          
+          {% if value is string %}
+            <div class="field-value">{{ value or "Не указано" }}</div>
+          {% elif value is iterable and value is not string %}
+            {% for item in value %}
+              <div class="list-item">{{ item }}</div>
+            {% endfor %}
+          {% else %}
+            <div class="field-value">{{ value or "Не указано" }}</div>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    
+    <div class="actions">
+      <a href="/" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Новый анализ
+      </a>
+      <button class="btn btn-secondary" onclick="window.print()">
+        <i class="fas fa-print"></i> Печать отчета
+      </button>
+    </div>
+  </div>
+</body>
+</html>

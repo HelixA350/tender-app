@@ -3,11 +3,17 @@ from werkzeug.utils import secure_filename
 import os
 from flask import Blueprint
 from tender_agent.utils.state import AgentState, technical_queries, TechnicalFields
+from tender_agent.agent import agent
+import json
 
 bp = Blueprint('routes', __name__)
 
 
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
+
+ANALYSIS_TYPES = {
+    'tz': [technical_queries, TechnicalFields],
+}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -48,7 +54,7 @@ def submit():
         for file in files:
             if file and allowed_file(file.filename):
                 try:
-                    filename = secure_filename(file.filename)
+                    filename = file.filename
                     file_path = os.path.join(uploads_dir, filename)
                     file.save(file_path)
                 except Exception as e:
@@ -58,10 +64,16 @@ def submit():
 
         init_state = AgentState(
             inp_file_dir=uploads_dir,
-            queries = technical_queries,
-            answer_schema=TechnicalFields
+            queries = ANALYSIS_TYPES[analysis_type][0],
+            answer_schema=ANALYSIS_TYPES[analysis_type][1]
         )
 
-        return redirect(request.url)
+        result = agent.invoke(init_state)
+        response = result['result']
+        print(type(response))
+
+        
+
+        return render_template('results.html', analysis_results=response)
 
     return render_template('submit.html')

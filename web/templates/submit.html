@@ -240,8 +240,6 @@
         <select id="analysisType" name="analysis_type" required>
           <option value="" disabled selected>Выберите тип анализа</option>
           <option value="tz">Анализ технического задания (ТЗ)</option>
-          <option value="contract">Анализ договора</option>
-          <option value="both">Анализ ТЗ и договора</option>
         </select>
       </div>
 
@@ -254,7 +252,7 @@
             <p>или</p>
           </div>
           <div class="file-upload-button">Выберите файлы</div>
-          <input type="file" id="files" class="file-input" name="files" multiple accept=".pdf, .docx, .txt" />
+          <input type="file" id="files" class="file-input" name="files" multiple accept=".pdf, .docx, .txt" required />
         </div>
         
         <div class="selected-files" id="selectedFiles" style="display: none;">
@@ -267,119 +265,124 @@
     </form>
   </div>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('files');
-    const fileUploadArea = document.getElementById('fileUploadArea');
-    const selectedFiles = document.getElementById('selectedFiles');
-    const fileList = document.getElementById('fileList');
-    let currentFiles = [];
-
-    fileUploadArea.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length > 0) {
-        currentFiles = [...currentFiles, ...Array.from(fileInput.files)];
-        updateFileList();
-        fileInput.value = ''; // сброс для повторного выбора тех же файлов
-      }
-    });
-
-    fileUploadArea.addEventListener('dragover', e => {
-      e.preventDefault();
-      fileUploadArea.classList.add('dragover');
-    });
-
-    fileUploadArea.addEventListener('dragleave', () => {
-      fileUploadArea.classList.remove('dragover');
-    });
-
-    fileUploadArea.addEventListener('drop', e => {
-      e.preventDefault();
-      fileUploadArea.classList.remove('dragover');
-      if (e.dataTransfer.files.length) {
-        currentFiles = [...currentFiles, ...Array.from(e.dataTransfer.files)];
-        updateFileList();
-      }
-    });
-
-    function updateFileList() {
-      fileList.innerHTML = '';
-      if (currentFiles.length === 0) {
-        selectedFiles.style.display = 'none';
-        return;
-      }
-      selectedFiles.style.display = 'block';
-
-      currentFiles.forEach((file, index) => {
-        const listItem = document.createElement('li');
-        listItem.className = 'file-item';
-
-        let icon = 'fa-file';
-        if (file.name.toLowerCase().endsWith('.pdf')) icon = 'fa-file-pdf';
-        else if (file.name.toLowerCase().endsWith('.docx')) icon = 'fa-file-word';
-        else if (file.name.toLowerCase().endsWith('.txt')) icon = 'fa-file-alt';
-
-        listItem.innerHTML = `
-          <div class="file-icon"><i class="fas ${icon}"></i></div>
-          <div class="file-info">
-            <div class="file-name">${file.name}</div>
-            <div class="file-size">${formatFileSize(file.size)}</div>
-          </div>
-          <div class="file-remove" data-index="${index}"><i class="fas fa-times"></i></div>
-        `;
-        fileList.appendChild(listItem);
-      });
-
-      document.querySelectorAll('.file-remove').forEach(btn => {
-        btn.addEventListener('click', e => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute('data-index'));
-          currentFiles.splice(idx, 1);
-          updateFileList();
-        });
-      });
-    }
-
-    function formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    // Обработка отправки формы
-    document.getElementById('tenderForm').addEventListener('submit', function(e) {
-      e.preventDefault(); // отменяем стандартную отправку
-
-      const analysisType = document.getElementById('analysisType').value;
-      if (!analysisType) {
-        alert('Пожалуйста, выберите тип анализа.');
-        return;
-      }
-      if (currentFiles.length === 0) {
-        alert('Пожалуйста, загрузите хотя бы один файл.');
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('analysis_type', analysisType);
-      currentFiles.forEach(file => {
-        formData.append('files', file);
-      });
-
-      // Отправляем на тот же URL, как при обычной POST-форме
-      console.log('Отправляем данные:', formData);
-      fetch(window.location.href, {
-        method: 'POST',
-        body: formData,
-        // headers не указываем — браузер сам установит Content-Type с boundary
-      })
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const fileInput = document.getElementById('files');
+      const fileUploadArea = document.getElementById('fileUploadArea');
+      const selectedFiles = document.getElementById('selectedFiles');
+      const fileList = document.getElementById('fileList');
       
+      // Обработчик клика по области загрузки
+      fileUploadArea.addEventListener('click', function() {
+        fileInput.click();
       });
+      
+      // Обработчик изменения выбранных файлов
+      fileInput.addEventListener('change', function() {
+        updateFileList();
+      });
+      
+      // Обработчики для drag & drop
+      fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+      });
+      
+      fileUploadArea.addEventListener('dragleave', function() {
+        fileUploadArea.classList.remove('dragover');
+      });
+      
+      fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        if (e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          updateFileList();
+        }
+      });
+      
+      // Функция обновления списка файлов
+      function updateFileList() {
+        fileList.innerHTML = '';
+        
+        if (fileInput.files.length === 0) {
+          selectedFiles.style.display = 'none';
+          return;
+        }
+        
+        selectedFiles.style.display = 'block';
+        
+        for (let i = 0; i < fileInput.files.length; i++) {
+          const file = fileInput.files[i];
+          const listItem = document.createElement('li');
+          listItem.className = 'file-item';
+          
+          // Определяем иконку в зависимости от типа файла
+          let fileIcon = 'fa-file';
+          if (file.name.toLowerCase().endsWith('.pdf')) {
+            fileIcon = 'fa-file-pdf';
+          } else if (file.name.toLowerCase().endsWith('.docx')) {
+            fileIcon = 'fa-file-word';
+          } else if (file.name.toLowerCase().endsWith('.txt')) {
+            fileIcon = 'fa-file-alt';
+          }
+          
+          // Форматируем размер файла
+          const fileSize = formatFileSize(file.size);
+          
+          listItem.innerHTML = `
+            <div class="file-icon">
+              <i class="fas ${fileIcon}"></i>
+            </div>
+            <div class="file-info">
+              <div class="file-name">${file.name}</div>
+              <div class="file-size">${fileSize}</div>
+            </div>
+            <div class="file-remove" data-index="${i}">
+              <i class="fas fa-times"></i>
+            </div>
+          `;
+          
+          fileList.appendChild(listItem);
+        }
+        
+        // Добавляем обработчики для кнопок удаления
+        document.querySelectorAll('.file-remove').forEach(button => {
+          button.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const index = parseInt(this.getAttribute('data-index'));
+            removeFile(index);
+          });
+        });
+      }
+      
+      // Функция удаления файла из списка
+      function removeFile(index) {
+        const dt = new DataTransfer();
+        const files = fileInput.files;
+        
+        for (let i = 0; i < files.length; i++) {
+          if (i !== index) {
+            dt.items.add(files[i]);
+          }
+        }
+        
+        fileInput.files = dt.files;
+        updateFileList();
+      }
+      
+      // Функция форматирования размера файла
+      function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+      }
     });
-  
-</script>
+  </script>
 </body>
 </html>

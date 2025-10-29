@@ -1,26 +1,26 @@
 from tender_agent.utils.state import AgentState
-from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_gigachat import GigaChat
 import os
 from langchain_core.prompts import ChatPromptTemplate
-import json
 from dotenv import load_dotenv
+from files_loader import Loader
+from langchain_community.llms.yandex import YandexGPT
+from langchain_core.output_parsers import JsonOutputParser
 
 load_dotenv()
 
-
 def load_data(state : AgentState) -> AgentState:
     # Инициализация загрузчика и модели эмбеддингов
-    loader = PyPDFLoader(state.inp_file_path)
+    loader = Loader(state.inp_file_dir)
     model_name = "ai-forever/ru-en-RoSBERTa"
     embeddings = HuggingFaceEmbeddings(model_name=model_name, show_progress=True)
 
     # Загрузка данных
     pages = []
-    pages = loader.load()
+    pages = loader.load_from_directory()
+    pages = [doc for doc_list in pages.values() for doc in doc_list]
 
     # Разделение на чанки
     splitter = RecursiveCharacterTextSplitter(
@@ -43,7 +43,7 @@ def load_data(state : AgentState) -> AgentState:
 
 def retrieve_data(state : AgentState) -> AgentState:
     all_chunks = []
-    queries = state.search_queries
+    queries = state.queries
     model_name = "ai-forever/ru-en-RoSBERTa"
     embeddings = HuggingFaceEmbeddings(model_name=model_name, show_progress=True)
     store = Chroma(
@@ -67,11 +67,11 @@ def retrieve_data(state : AgentState) -> AgentState:
 
 def generate_answer(state : AgentState) -> AgentState:
     # Создаем LLM, выдающую структурированный ответ
-    llm = GigaChat(
-        credentials=os.getenv('AUTH_TOKEN'),
-        verify_ssl_certs=False,
+    llm = YandexGPT(
+        folder_id=os.environ.get('CATALOG_ID'),
+        api_key=os.environ.get('YC_API_KEY'),
     )
-    structured_llm = llm.with_structured_output(schema=state.answer_schema)
+    parser = JsonOutputParser(pydantic_object=state.answer_schema)
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", """Ты — профессиональный аналитик тендерной документации. 
@@ -81,17 +81,24 @@ def generate_answer(state : AgentState) -> AgentState:
     - Анализируй ТОЛЬКО предоставленные фрагменты документации
     - Не добавляй информацию, отсутствующую в исходном тексте
     - Будь максимально точен и объективен
-    - Если информация по какому-либо полю не найдена, указывай "Не указано в документации"""),
+    - В ответ в поле 'technical_specs' указывай подробно все технические требования
+    - В ответ в поле 'key_requirements' указывай подробно все ключевые требования к участнику
+    - Если информация по какому-либо полю не найдена, указывай "Не указано в документации
+    - ОБЯЗАТЕЛЬНО форматируй ответ по следующей инструкции:
+    {format_instructions}
+         
+         """),
+    
 
         ("human", """ПРОАНАЛИЗИРУЙ СЛЕДУЮЩУЮ ТЕНДЕРНУЮ ДОКУМЕНТАЦИЮ И ИЗВЛЕКИ СТРУКТУРИРОВАННУЮ ИНФОРМАЦИЮ:
 
     {context}""")
     ])
 
-    result = structured_llm.invoke(prompt.format(context=state.context))
-    state.output = result
+    messages = prompt.invoke({"context": state.context,
+                              "format_instructions": parser.get_format_instructions()})
+    result = llm.invoke(messages)
+    state.result = parser.parse(result)
 
-    with open(state.output_path, 'w', encoding='utf-8') as f:
-        json.dump(result.dict(), f, ensure_ascii=False, indent=2)
 
     return state

@@ -2,3 +2,4 @@ venv/
 vectorstore/
 result.json
 .env
+web/tmp

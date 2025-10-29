@@ -3,9 +3,10 @@ from typing import List, Dict, Type, Optional
 
 # --- Схемы данных ---
 class TechnicalFields(BaseModel):
+    """Выходные данные, которые необходимо извлечь из текста технического задания тендерной документации"""
     tender_type: str = Field(description="Тип тендера: закупка, обслуживание, ремонт, разработка")
     key_requirements: List[str] = Field(description="Ключевые требования к участнику")
-    technical_specs: List[str] = Field(description="Технические характеристики и спецификации")
+    technical_specs: List[str] = Field(description="Технические требования к работе")
     budget: str = Field(description="Бюджет, цена или стоимость")
     deadlines: str = Field(description="Сроки выполнения и даты")
 
@@ -26,3 +27,4 @@ class AgentState(BaseModel):
     context: List[str] = Field(default=[], description='Найденные релевантные данные')
     queries: Dict[str, str] = Field(description='Запросы для поиска')
     answer_schema: Type[BaseModel] = Field(description='Схема выходных данных')
+    result: Optional[Type[BaseModel]] = Field(description='Результат обработки', default=None)
