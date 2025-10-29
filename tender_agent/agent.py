@@ -17,5 +17,3 @@ agent_builder.add_edge('generate_answer', END)
 
 # Сборка графа
 agent = agent_builder.compile()
-
-
