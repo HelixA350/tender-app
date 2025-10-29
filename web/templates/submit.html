@@ -12,78 +12,224 @@
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: #f9fafb;
+      background-color: #e9ecfa;
       color: #1f2937;
       padding: 20px;
       line-height: 1.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
     }
     .container {
-      max-width: 700px;
+      max-width: 800px;
+      width: 100%;
       margin: 0 auto;
       background: white;
-      padding: 24px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(to right, #667eea, #764ba2);
     }
     h1 {
-      font-size: 24px;
-      margin-bottom: 24px;
+      font-size: 28px;
+      margin-bottom: 30px;
       text-align: center;
+      color: #1f2937;
+      font-weight: 700;
     }
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     label {
       display: block;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       font-weight: 600;
       font-size: 16px;
+      color: #374151;
     }
-    select, input[type="file"] {
+    select {
       width: 100%;
-      padding: 12px;
+      padding: 14px 16px;
       border: 1px solid #d1d5db;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 16px;
       background-color: white;
+      transition: all 0.3s;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23667eea' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      background-size: 16px;
     }
-    input[type="file"]::file-selector-button {
-      margin-right: 12px;
-      padding: 8px 12px;
-      border: none;
-      background-color: #3b82f6;
+    select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .file-upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      transition: all 0.3s;
+      background-color: #f9fafb;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .file-upload-area:hover, .file-upload-area.dragover {
+      border-color: #667eea;
+      background-color: rgba(102, 126, 234, 0.05);
+    }
+    .file-upload-area i {
+      font-size: 48px;
+      color: #667eea;
+      margin-bottom: 15px;
+      display: block;
+    }
+    .file-upload-text {
+      margin-bottom: 15px;
+    }
+    .file-upload-text h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: #1f2937;
+    }
+    .file-upload-text p {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .file-input {
+      display: none;
+    }
+    .file-upload-button {
+      display: inline-block;
+      padding: 10px 20px;
+      background-color: #667eea;
       color: white;
       border-radius: 6px;
       cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .file-upload-button:hover {
+      background-color: #5e73d1;
+    }
+    .selected-files {
+      margin-top: 20px;
+    }
+    .selected-files h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    .file-list {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .file-item {
+      display: flex;
+      flex-direction: column;
+      width: calc(33.333% - 8px);
+      padding: 12px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+      position: relative;
+    }
+    .file-icon {
+      text-align: center;
+      color: #667eea;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    .file-info {
+      flex: 1;
+    }
+    .file-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+      font-size: 14px;
+      word-break: break-word;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    .file-size {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .file-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      color: #ef4444;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
       font-size: 14px;
     }
-    input[type="file"]::file-selector-button:hover {
-      background-color: #2563eb;
+    .file-remove:hover {
+      background-color: rgba(239, 68, 68, 0.1);
     }
     button {
       width: 100%;
-      padding: 14px;
-      background-color: #10b981;
+      padding: 16px;
+      background-color: #667eea;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 18px;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.3s;
+      margin-top: 10px;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     button:hover {
-      background-color: #0da271;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    @media (max-width: 768px) {
+      .file-item {
+        width: calc(50% - 6px);
+      }
     }
     @media (max-width: 600px) {
       .container {
-        padding: 16px;
+        padding: 24px;
       }
       h1 {
-        font-size: 20px;
+        font-size: 22px;
+      }
+      .file-upload-area {
+        padding: 20px;
+      }
+      .file-item {
+        width: 100%;
       }
     }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
   <div class="container">
@@ -96,17 +242,144 @@
           <option value="tz">Анализ технического задания (ТЗ)</option>
           <option value="contract">Анализ договора</option>
           <option value="both">Анализ ТЗ и договора</option>
-          <!-- можно добавить другие типы -->
         </select>
       </div>
 
       <div class="form-group">
-        <label for="files">Файлы (поддерживаются PDF, DOCX, TXT)</label>
-        <input type="file" id="files" name="files" multiple accept=".pdf, .docx" required />
+        <label>Файлы (поддерживаются PDF, DOCX, TXT)</label>
+        <div class="file-upload-area" id="fileUploadArea">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <div class="file-upload-text">
+            <h3>Перетащите файлы сюда</h3>
+            <p>или</p>
+          </div>
+          <div class="file-upload-button">Выберите файлы</div>
+          <input type="file" id="files" class="file-input" name="files" multiple accept=".pdf, .docx, .txt" />
+        </div>
+        
+        <div class="selected-files" id="selectedFiles" style="display: none;">
+          <h3>Выбранные файлы:</h3>
+          <ul class="file-list" id="fileList"></ul>
+        </div>
       </div>
 
       <button type="submit">Анализировать</button>
     </form>
   </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('files');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const selectedFiles = document.getElementById('selectedFiles');
+    const fileList = document.getElementById('fileList');
+    let currentFiles = [];
+
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        currentFiles = [...currentFiles, ...Array.from(fileInput.files)];
+        updateFileList();
+        fileInput.value = ''; // сброс для повторного выбора тех же файлов
+      }
+    });
+
+    fileUploadArea.addEventListener('dragover', e => {
+      e.preventDefault();
+      fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', () => {
+      fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', e => {
+      e.preventDefault();
+      fileUploadArea.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        currentFiles = [...currentFiles, ...Array.from(e.dataTransfer.files)];
+        updateFileList();
+      }
+    });
+
+    function updateFileList() {
+      fileList.innerHTML = '';
+      if (currentFiles.length === 0) {
+        selectedFiles.style.display = 'none';
+        return;
+      }
+      selectedFiles.style.display = 'block';
+
+      currentFiles.forEach((file, index) => {
+        const listItem = document.createElement('li');
+        listItem.className = 'file-item';
+
+        let icon = 'fa-file';
+        if (file.name.toLowerCase().endsWith('.pdf')) icon = 'fa-file-pdf';
+        else if (file.name.toLowerCase().endsWith('.docx')) icon = 'fa-file-word';
+        else if (file.name.toLowerCase().endsWith('.txt')) icon = 'fa-file-alt';
+
+        listItem.innerHTML = `
+          <div class="file-icon"><i class="fas ${icon}"></i></div>
+          <div class="file-info">
+            <div class="file-name">${file.name}</div>
+            <div class="file-size">${formatFileSize(file.size)}</div>
+          </div>
+          <div class="file-remove" data-index="${index}"><i class="fas fa-times"></i></div>
+        `;
+        fileList.appendChild(listItem);
+      });
+
+      document.querySelectorAll('.file-remove').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute('data-index'));
+          currentFiles.splice(idx, 1);
+          updateFileList();
+        });
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Обработка отправки формы
+    document.getElementById('tenderForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // отменяем стандартную отправку
+
+      const analysisType = document.getElementById('analysisType').value;
+      if (!analysisType) {
+        alert('Пожалуйста, выберите тип анализа.');
+        return;
+      }
+      if (currentFiles.length === 0) {
+        alert('Пожалуйста, загрузите хотя бы один файл.');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('analysis_type', analysisType);
+      currentFiles.forEach(file => {
+        formData.append('files', file);
+      });
+
+      // Отправляем на тот же URL, как при обычной POST-форме
+      console.log('Отправляем данные:', formData);
+      fetch(window.location.href, {
+        method: 'POST',
+        body: formData,
+        // headers не указываем — браузер сам установит Content-Type с boundary
+      })
+      
+      });
+    });
+  
+</script>
 </body>
 </html>
