@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
-from typing import List, Dict, Type, Optional
+from typing import List, Dict, Type, Optional, Any
 
-# --- Схемы данных ---
+# --- Схема данных для Обработки Технического Задания ---
 class TechnicalFields(BaseModel):
     """Выходные данные, которые необходимо извлечь из текста технического задания тендерной документации"""
     tender_type: str = Field(description="Тип тендера: закупка, обслуживание, ремонт, разработка")
@@ -19,12 +19,11 @@ technical_queries={
     "deadlines": "сроки выполнения дата окончания период график"
 }
 
-
 # --- Состояние агента ---
 class AgentState(BaseModel):
     inp_file_dir: str = Field(description='Путь к папке с файлами для обработки')
-    vectorstore_path: str = Field(description='Путь к векторной базе данных', default='vectorstore')
     context: List[str] = Field(default=[], description='Найденные релевантные данные')
     queries: Dict[str, str] = Field(description='Запросы для поиска')
     answer_schema: Type[BaseModel] = Field(description='Схема выходных данных')
     result: Optional[Type[BaseModel]] = Field(description='Результат обработки', default=None)
+    vectorstore: Optional[Any] = Field(description='Объект векторной базы данных', default=None)

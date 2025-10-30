@@ -4,7 +4,7 @@ import os
 from flask import Blueprint
 from tender_agent.utils.state import AgentState, technical_queries, TechnicalFields
 from tender_agent.agent import agent
-import json
+from tender_agent.utils.errors import *
 
 bp = Blueprint('routes', __name__)
 
@@ -12,7 +12,10 @@ bp = Blueprint('routes', __name__)
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 ANALYSIS_TYPES = {
-    'tz': [technical_queries, TechnicalFields],
+    'tz': {
+        'queries': technical_queries,
+        'answer_schema': TechnicalFields
+    },
 }
 
 def allowed_file(filename):
@@ -62,18 +65,24 @@ def submit():
             else:
                 return render_template('error.html', error_message='Недопустимый формат файла')
 
-        init_state = AgentState(
-            inp_file_dir=uploads_dir,
-            queries = ANALYSIS_TYPES[analysis_type][0],
-            answer_schema=ANALYSIS_TYPES[analysis_type][1]
-        )
+        try:
+            init_state = AgentState(
+                inp_file_dir=uploads_dir,
+                queries = ANALYSIS_TYPES[analysis_type]['queries'],
+                answer_schema=ANALYSIS_TYPES[analysis_type]['answer_schema']
+            )
 
-        result = agent.invoke(init_state)
-        response = result['result']
-        print(type(response))
+            result = agent.invoke(init_state)
+            response = result['result']
 
-        
-
-        return render_template('results.html', analysis_results=response)
+            return render_template('results.html', analysis_results=response)
+        except NoDocumentsError:
+            return render_template('error.html', error_message='Не удалось загрузить ни один фрагмент текста из документов')
+        except FailedToCreateVectorstoreError:
+            return render_template('error.html', error_message='Не удалось создать векторное хранилище из загруженных документов')
+        except LlmError:
+            return render_template('error.html', error_message='Ошибка при суммаризации документов языковой моделью')
+        except Exception as e:
+            return render_template('error.html', error_message='Произошла непредвиденная ошибка')
 
     return render_template('submit.html')
