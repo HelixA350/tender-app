@@ -228,6 +228,136 @@
         width: 100%;
       }
     }
+
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.353);
+      display: none;
+      width: 100vw;
+      height: 100vh;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .loading-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+            display: none;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+
+        .spinner {
+          width: 80px;
+          height: 80px;
+          border: 12px solid white;
+          border-top-color: #667eea;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          position: relative;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .loading-icon::before {
+            content: '!';
+            font-size: 40px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .loading-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .loading-message {
+            font-size: 16px;
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+
+        .loading-button {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .loading-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .loading-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .loading-container {
+                padding: 30px 20px;
+            }
+            
+            .loading-icon {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .loading-title {
+                font-size: 24px;
+            }
+          }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
@@ -261,8 +391,21 @@
         </div>
       </div>
 
-      <button type="submit">Анализировать</button>
+      <button type="submit" id="send-button">Анализировать</button>
     </form>
+
+      <!-- Область для отображения загрузки (ожидания ответа) -->
+    <div class="overlay" id="overlay">
+      <div class="loading-container" id="loading-container">
+          <div class="spinner"></div>
+            <h1 class="loading-title">Загрузка</h1>
+            <div class="loading-message" id="error-message">
+                ИИ агент находится в стадии разработки, из-за чего некоторые функции могут работать медленно. Время ожидания может достигать нескольких минут.
+            </div>
+            <button class="loading-button" onclick="window.history.back()">Назад</button>
+        </div>
+    </div>
+    
   </div>
 
   <script>
@@ -271,6 +414,15 @@
       const fileUploadArea = document.getElementById('fileUploadArea');
       const selectedFiles = document.getElementById('selectedFiles');
       const fileList = document.getElementById('fileList');
+      const sendButton = document.getElementById('send-button');
+      const loadingContainer = document.getElementById('loading-container');
+      const overlay = document.getElementById('overlay');
+
+      // Открытие Popup с загрузкой при отправке формы
+      sendButton.addEventListener('click', function(e) {
+        loadingContainer.style.display = 'block';
+        overlay.style.display = 'flex';
+      });
       
       // Обработчик клика по области загрузки
       fileUploadArea.addEventListener('click', function() {
