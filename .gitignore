@@ -3,3 +3,4 @@ vectorstore/
 result.json
 .env
 web/tmp
+.devdbrc

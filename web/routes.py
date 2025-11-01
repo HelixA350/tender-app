@@ -5,6 +5,9 @@ from flask import Blueprint
 from tender_agent.utils.state import AgentState, technical_queries, TechnicalFields
 from tender_agent.agent import agent
 from tender_agent.utils.errors import *
+import uuid
+from web import db
+from web.models import *
 
 bp = Blueprint('routes', __name__)
 
@@ -14,7 +17,8 @@ ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 ANALYSIS_TYPES = {
     'tz': {
         'queries': technical_queries,
-        'answer_schema': TechnicalFields
+        'answer_schema': TechnicalFields,
+        'db_name': 'technical'
     },
 }
 
@@ -41,15 +45,24 @@ def submit():
         if not uploads_dir or not os.path.exists(uploads_dir):
             return render_template('error.html', error_message='Директория для загрузки не существует')
         
-        # Очищаем директорию перед сохранением новых файлов
+        unique_dir = str(uuid.uuid1())
+        # Создаем уникальную директорию для сохранения файлов
         try:
-            for filename in os.listdir(uploads_dir):
-                file_path = os.path.join(uploads_dir, filename)
-                try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                except Exception as e:
-                    return render_template('error.html', error_message='Ошибка при удалении прошлых файлов')
+            file_dir = os.path.join(uploads_dir, unique_dir)
+            os.mkdir(file_dir)
+        except:
+            return render_template('error.html', error_message='Ошибка при создании директории для сохранения файлов')
+        
+        # Очищаем директорию перед сохранением новых файлов если там что-то есть
+        try:
+            if len(os.listdir(file_dir)) != 0:
+                for filename in os.listdir(file_dir):
+                    file_path = os.path.join(file_dir, filename)
+                    try:
+                        if os.path.isfile(file_path):
+                            os.unlink(file_path)
+                    except Exception as e:
+                        return render_template('error.html', error_message='Ошибка при удалении прошлых файлов')
         except Exception as e:
             return render_template('error.html', error_message='Ошибка при очистке директории')
         
@@ -58,7 +71,7 @@ def submit():
             if file and allowed_file(file.filename):
                 try:
                     filename = file.filename
-                    file_path = os.path.join(uploads_dir, filename)
+                    file_path = os.path.join(file_dir, filename)
                     file.save(file_path)
                 except Exception as e:
                     return render_template('error.html', error_message=f'Ошибка при сохранении файла {file.filename}')
@@ -67,13 +80,21 @@ def submit():
 
         try:
             init_state = AgentState(
-                inp_file_dir=uploads_dir,
+                inp_file_dir=file_dir,
                 queries = ANALYSIS_TYPES[analysis_type]['queries'],
                 answer_schema=ANALYSIS_TYPES[analysis_type]['answer_schema']
             )
 
             result = agent.invoke(init_state)
             response = result['result']
+            try:
+                record_data(
+                    analysis_type=ANALYSIS_TYPES[analysis_type]['db_name'],
+                    file_paths=[os.path.join(unique_dir, file.filename) for file in files],
+                    response=response,
+                )
+            except Exception as e:
+                print(e)
 
             return render_template('results.html', analysis_results=response)
         except NoDocumentsError:
@@ -83,6 +104,38 @@ def submit():
         except LlmError:
             return render_template('error.html', error_message='Ошибка при суммаризации документов языковой моделью')
         except Exception as e:
+            print(e)
             return render_template('error.html', error_message='Произошла непредвиденная ошибка')
 
     return render_template('submit.html')
+
+def record_data(
+    analysis_type: str,
+    file_paths: list,
+    response: dict
+):
+    try:
+        analysis_enum = AnalysisType(analysis_type.lower())
+    except ValueError:
+        raise print('Invalid analysis type')
+    
+    new_analysis = Analysis(
+        analysis_type=analysis_enum,
+    )
+    db.session.add(new_analysis)
+    db.session.flush()
+
+    for file_path in file_paths:
+        if file_path:
+            new_file = File(
+                analysis_id=new_analysis.id,
+                file_name=file_path
+            )
+            db.session.add(new_file)
+    new_response = AnalysisResult(
+        final_response=str(response),
+        analysis_id=new_analysis.id
+    )
+    db.session.add(new_response)
+    db.session.commit()
+    
