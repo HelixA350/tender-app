@@ -12,6 +12,7 @@ class InvalidFileFormatError(Exception):
 class SaveFileError(Exception):
     pass
 
+# --- Сервис для сохранения файлов ---
 class FileService:
     def __init__(self, dir_path : str):
         """

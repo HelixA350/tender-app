@@ -66,3 +66,21 @@ class DataService:
             return new_analysis.id
         except:
             raise DBError('Ошибка при записи данных в БД')
+
+    def record_feedback(self, analysis_id, overall, message):
+        """Запись обратной связи
+        Args:
+            analysis_id: id анализа
+            overall: сообщение с общей оценкой
+            message: подробный комментарий
+        """
+        try:
+            new_feedback = Feedback(
+                analysis_id=analysis_id,
+                overall=overall,
+                message=message
+            )
+            self.db.session.add(new_feedback)
+            self.db.session.commit()
+        except:
+            raise DBError('Ошибка при записи данных в БД')

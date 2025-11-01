@@ -63,11 +63,15 @@
       const sendButton = document.getElementById('send-button');
       const loadingContainer = document.getElementById('loading-container');
       const overlay = document.getElementById('overlay');
+      const analysisType = document.getElementById('analysisType');
 
       // Открытие Popup с загрузкой при отправке формы
       sendButton.addEventListener('click', function(e) {
-        loadingContainer.style.display = 'block';
-        overlay.style.display = 'flex';
+        if (fileInput.files.length != 0 && analysisType.value) {
+          loadingContainer.style.display = 'block';
+          overlay.style.display = 'flex';
+        }
+
       });
       
       // Обработчик клика по области загрузки

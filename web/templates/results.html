@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <div class="container">
+  <div class="container" id="result">
     <h1><i class="fas fa-chart-bar"></i> Результаты анализа тендера</h1>
     
     <div class="section">
@@ -85,10 +85,125 @@
       <a href="/" class="btn btn-primary">
         <i class="fas fa-arrow-left"></i> Новый анализ
       </a>
-      <button class="btn btn-secondary" onclick="window.print()">
-        <i class="fas fa-print"></i> Печать отчета
+      <button class="btn btn-secondary" id="download">
+        <i class="fas fa-download"></i> Скачать отчет
       </button>
     </div>
   </div>
+
+  <!-- Форма обратной связи -->
+  <div class="overlay" id="overlay">
+    <div class="feedback-container">
+      <h2 class="feedback-title">Оставить отзыв</h2>
+      <form class="feedback-form" id="feedbackForm">
+        <div class="form-group">
+          <label for="overall">Тип отзыва</label>
+          <select id="overall" name="overall" required>
+            <option value="" disabled selected>Выберите тип отзыва</option>
+            <option value="accurate">Всё верно, ответ точный</option>
+            <option value="partially_correct">Частично верно, есть неточности</option>
+            <option value="missing_info">Пропущена важная информация</option>
+            <option value="hallucinated">Есть вымышленные или ошибочные данные</option>
+            <option value="other">Другое (укажите в комментарии)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Сообщение</label>
+          <textarea
+            id="message"
+            name="message"
+            placeholder="Расскажите подробнее..."
+            maxlength="10000"
+            required
+          ></textarea>
+        </div>
+        <button type="submit" class="feedback-button">Отправить</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="app-data" style="display: none;" data-analysis-id="{{ analysis_id }}"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  const downloadBtn = document.getElementById('download');
+  const feedbackContainer = document.getElementById('overlay');
+  const analysisId = document.getElementById('app-data').dataset.analysisId;
+  const resultContainer = document.getElementById('result');
+  let wasFeedbackSent = false;
+
+  // Выводим форму обратной связи
+  function showFeedbackForm() {
+    feedbackContainer.style.display = 'flex';
+  }
+
+  // Скрываем форму обратной связи
+  function hideFeedbackForm() {
+    feedbackContainer.style.display = 'none';
+  }
+
+  // Отправляем форму обратной связи
+  document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      data.analysis_id = analysisId;
+
+      try {
+        const response = await fetch('/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          alert('Спасибо за ваш отзыв!');
+          wasFeedbackSent = true;
+          hideFeedbackForm();
+        } else {
+          alert('Произошла ошибка при отправке.');
+        }
+      } catch (error) {
+        alert('Не удалось отправить отзыв. Проверьте соединение.');
+        console.error(error);
+      }
+  });
+
+  // Обрабатываем Экспорт в PDF
+  downloadBtn.addEventListener('click', async () => {
+    if (wasFeedbackSent) {
+      const { jsPDF } = window.jspdf;
+      const element = resultContainer; // или любой другой контейнер
+
+      const canvas = await html2canvas(element);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const width = pdf.internal.pageSize.getWidth();
+      const height = (canvas.height * width) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+      pdf.save('document.pdf');
+    }
+    else {showFeedbackForm();}
+
+  });
+
+  // Обрабатываем переход к новому анализу
+  function goToNewAnalysis() {
+    if (wasFeedbackSent) {
+      window.location.href = '/';
+    }
+    else {showFeedbackForm();}
+  }
+
+  
+
+
+</script>
 </body>
 </html>

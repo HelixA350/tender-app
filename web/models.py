@@ -7,9 +7,11 @@ class AnalysisType(Enum):
 
 
 class FeedbackMessages(Enum):
-    positive = 'positive'
-    negative = 'negative'
-    neutral = 'neutral'
+    accurate = "accurate"
+    partially_correct = "partially_correct"
+    missing_info = "missing_info"
+    hallucinated = "hallucinated"
+    other = "other"
 
 
 class Analysis(db.Model):

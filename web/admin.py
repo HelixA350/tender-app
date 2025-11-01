@@ -18,7 +18,7 @@ def truncate_with_expand(text, max_length=100):
     )
 
 class MainView(ModelView):
-    column_list =['id', 'Файлы', 'Тип анализа', 'Результат', 'Обратная связь (оценка)', 'Обратная свзяь (сообщение)']
+    column_list =['id', 'Файлы', 'Тип анализа', 'Результат', 'Обратная связь (оценка)', 'Обратная связь (сообщение)']
     column_select_related_list = [Analysis.files, Analysis.feedback, Analysis.result]
     can_export = True
     column_formatters = {
@@ -28,8 +28,9 @@ class MainView(ModelView):
         'Обратная связь (оценка)': lambda v, c, m, p: m.feedback.overall if m.feedback else '',
         'Обратная связь (сообщение)': lambda v, c, m, p: m.feedback.message if m.feedback else '',
     }
-    can_delete = False
+    can_delete = True
     can_create = False
+
     can_edit = False
     can_set_page_size = True
     column_searchable_list = ['files.file_name', 'analysis_type', 'result.final_response', 'feedback.overall', 'feedback.message']

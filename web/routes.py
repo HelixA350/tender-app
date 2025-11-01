@@ -1,12 +1,11 @@
-from flask import request, render_template
-import os
+from flask import request, render_template, jsonify
 from flask import Blueprint
 from tender_agent.utils.errors import *
 from web import handler
 from web.models import *
 from web.services.file_service import SaveFileError, CreateDirError, InvalidFileFormatError
 from web.services.data_service import InvalidAnalysisTypeError, DBError
-from web.services.request_handler_service import NoFilesError, NoAnalysisTypeError
+from web.services.request_handler_service import *
 
 bp = Blueprint('routes', __name__)
 
@@ -22,7 +21,8 @@ ERROR_MESSAGES = {
     InvalidFileFormatError: 'Неподдерживаемый формат файла',
     Exception: 'Произошла непредвиденная ошибка',
     NoAnalysisTypeError: 'Не выбран тип анализа',
-    NoFilesError: 'Не выбраны файлы'
+    NoFilesError: 'Не выбраны файлы',
+    MissingFeedbackFieldsError: 'Не заполнены обязательные поля обратной связи'
 }
 
 # --- Маршруты ---
@@ -37,7 +37,7 @@ def submit():
     try:
     # Обработка запроса
         response, id = handler.handle_form_submission(request)
-        return render_template('results.html', analysis_results=response)
+        return render_template('results.html', analysis_results=response, analysis_id=id)
     
     # Обработка ошибок
     except Exception as e:
@@ -46,7 +46,16 @@ def submit():
                 return render_template('error.html', error_message=msg)
         return render_template('error.html', error_message='Произошла непредвиденная ошибка')
 
-@bp.post('/feedback/<id>')
-def feedback(id):
+@bp.post('/feedback')
+def feedback():
     """Обработка отзыва пользователя"""
-    print(f'feedback: {id}')
+    try:
+        handler.handle_feedback_submit(request)
+        return jsonify({'status': 'ok'}), 200
+    
+    # Обработка ошибок
+    except Exception as e:
+        for exc_type, msg in ERROR_MESSAGES.items():
+            if isinstance(e, exc_type):
+                return render_template('error.html', error_message=msg)
+        return render_template('error.html', error_message='Произошла непредвиденная ошибка')

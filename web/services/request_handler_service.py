@@ -8,6 +8,9 @@ class NoAnalysisTypeError(Exception):
 class NoFilesError(Exception):
     pass
 
+class MissingFeedbackFieldsError(Exception):
+    pass
+
 class HandlerService:
     def __init__(self):
         pass
@@ -40,3 +43,14 @@ class HandlerService:
             response=response,
         )
         return response, id
+    
+    def handle_feedback_submit(self, request):
+        data = request.get_json()
+        overall = data.get('overall')
+        message = data.get('message')
+        analysis_id = data.get('analysis_id')
+        if not overall or not message or not analysis_id:
+            raise MissingFeedbackFieldsError('Не заполнены обязательные поля')
+        else:
+            data_service.record_feedback(analysis_id, overall, message)
+        return None
