@@ -16,7 +16,7 @@ class Analysis(db.Model):
     __tablename__ = 'analysis'
 
     id = db.Column(db.Integer, primary_key=True)
-    analysis_type = db.Column(db.Enum(AnalysisType))
+    analysis_type = db.Column(db.Enum(AnalysisType), nullable=True)
 
     # One-to-many: one Analysis can have many Files
     files = db.relationship('File', back_populates='analysis', cascade='all, delete-orphan')

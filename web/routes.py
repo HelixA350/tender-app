@@ -1,141 +1,63 @@
-from flask import request, redirect, url_for, flash, render_template
-from werkzeug.utils import secure_filename
+from flask import request, render_template
 import os
 from flask import Blueprint
-from tender_agent.utils.state import AgentState, technical_queries, TechnicalFields
-from tender_agent.agent import agent
 from tender_agent.utils.errors import *
-import uuid
-from web import db
+from web import file_service, data_service, agent_service
 from web.models import *
+from web.services.file_service import SaveFileError, CreateDirError, InvalidFileFormatError
+from web.services.data_service import InvalidAnalysisTypeError, DBError
 
 bp = Blueprint('routes', __name__)
 
-
-ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
-
-ANALYSIS_TYPES = {
-    'tz': {
-        'queries': technical_queries,
-        'answer_schema': TechnicalFields,
-        'db_name': 'technical'
-    },
+ERROR_MESSAGES = {
+    InvalidAnalysisTypeError: 'Неправильный тип анализа: выбранный тип не поддерживается БД',
+    DBError: 'Ошибка при работе с базой данных',
+    NoDocumentsError: 'Не удалось загрузить ни один фрагмент текста из документов',
+    FailedToCreateVectorstoreError: 'Не удалось создать векторное хранилище из загруженных документов',
+    LlmError: 'Ошибка при суммаризации документов языковой моделью',
+    SaveFileError: 'Ошибка при сохранении файла, попробуйте еще раз',
+    CreateDirError: 'Ошибка при создании директории для сохранения файлов, попробуйте еще раз',
+    InvalidFileFormatError: 'Неподдерживаемый формат файла',
+    Exception: 'Произошла непредвиденная ошибка'
 }
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def handle_form_submission(request):
+    # Получаем данные из формы
+    analysis_type = request.form.get('analysis_type')
+    files = request.files.getlist('files')
+
+    # Проверяем правильность заполнения формы
+    if not analysis_type:
+        return render_template('error.html', error_message='Выберите тип анализа')
+    if not files or all(f.filename == '' for f in files):
+        return render_template('error.html', error_message='Загрузите хотя бы один файл')
+    
+    # Вызываем сервисы
+    file_dir = file_service.save_file(files)
+    result = agent_service.call_agent(file_dir, analysis_type)
+    response = result['result']
+    data_service.record_data(
+        analysis_type=analysis_type,
+        file_paths=[os.path.join(file_dir, file.filename) for file in files],
+        response=response,
+    )
+    return response
 
 @bp.route('/', methods=['GET', 'POST'])
 def submit():
     if request.method == 'POST':
-        # Получаем данные из формы
-        analysis_type = request.form.get('analysis_type')
-        files = request.files.getlist('files')
-
-        if not analysis_type:
-            return render_template('error.html', error_message='Выберите тип анализа')
-
-        if not files or all(f.filename == '' for f in files):
-            return render_template('error.html', error_message='Загрузите хотя бы один файл')
-
-        # Директория для загрузки файлов
-        uploads_dir = r'web/tmp' #os.environ.get('UPLOAD_FOLDER')
-        
-        # Проверяем существование директории
-        if not uploads_dir or not os.path.exists(uploads_dir):
-            return render_template('error.html', error_message='Директория для загрузки не существует')
-        
-        unique_dir = str(uuid.uuid1())
-        # Создаем уникальную директорию для сохранения файлов
         try:
-            file_dir = os.path.join(uploads_dir, unique_dir)
-            os.mkdir(file_dir)
-        except:
-            return render_template('error.html', error_message='Ошибка при создании директории для сохранения файлов')
-        
-        # Очищаем директорию перед сохранением новых файлов если там что-то есть
-        try:
-            if len(os.listdir(file_dir)) != 0:
-                for filename in os.listdir(file_dir):
-                    file_path = os.path.join(file_dir, filename)
-                    try:
-                        if os.path.isfile(file_path):
-                            os.unlink(file_path)
-                    except Exception as e:
-                        return render_template('error.html', error_message='Ошибка при удалении прошлых файлов')
-        except Exception as e:
-            return render_template('error.html', error_message='Ошибка при очистке директории')
-        
-        # Сохраняем все файлы
-        for file in files:
-            if file and allowed_file(file.filename):
-                try:
-                    filename = file.filename
-                    file_path = os.path.join(file_dir, filename)
-                    file.save(file_path)
-                except Exception as e:
-                    return render_template('error.html', error_message=f'Ошибка при сохранении файла {file.filename}')
-            else:
-                return render_template('error.html', error_message='Недопустимый формат файла')
-
-        try:
-            init_state = AgentState(
-                inp_file_dir=file_dir,
-                queries = ANALYSIS_TYPES[analysis_type]['queries'],
-                answer_schema=ANALYSIS_TYPES[analysis_type]['answer_schema']
-            )
-
-            result = agent.invoke(init_state)
-            response = result['result']
-            try:
-                record_data(
-                    analysis_type=ANALYSIS_TYPES[analysis_type]['db_name'],
-                    file_paths=[os.path.join(unique_dir, file.filename) for file in files],
-                    response=response,
-                )
-            except Exception as e:
-                print(e)
-
+            response = handle_form_submission(request)
             return render_template('results.html', analysis_results=response)
-        except NoDocumentsError:
-            return render_template('error.html', error_message='Не удалось загрузить ни один фрагмент текста из документов')
-        except FailedToCreateVectorstoreError:
-            return render_template('error.html', error_message='Не удалось создать векторное хранилище из загруженных документов')
-        except LlmError:
-            return render_template('error.html', error_message='Ошибка при суммаризации документов языковой моделью')
+        
+        # Обработка ошибок
         except Exception as e:
-            print(e)
+            for exc_type, msg in ERROR_MESSAGES.items():
+                if isinstance(e, exc_type):
+                    return render_template('error.html', error_message=msg)
             return render_template('error.html', error_message='Произошла непредвиденная ошибка')
 
     return render_template('submit.html')
 
-def record_data(
-    analysis_type: str,
-    file_paths: list,
-    response: dict
-):
-    try:
-        analysis_enum = AnalysisType(analysis_type.lower())
-    except ValueError:
-        raise print('Invalid analysis type')
-    
-    new_analysis = Analysis(
-        analysis_type=analysis_enum,
-    )
-    db.session.add(new_analysis)
-    db.session.flush()
 
-    for file_path in file_paths:
-        if file_path:
-            new_file = File(
-                analysis_id=new_analysis.id,
-                file_name=file_path
-            )
-            db.session.add(new_file)
-    new_response = AnalysisResult(
-        final_response=str(response),
-        analysis_id=new_analysis.id
-    )
-    db.session.add(new_response)
-    db.session.commit()
     

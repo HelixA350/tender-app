@@ -6,6 +6,13 @@ from flask_admin import Admin
 db = SQLAlchemy()
 admin = Admin()
 
+# --- Инициализация сервисов ---
+from web.services import FileService, DataService, AgentService
+file_service = FileService(r'web\tmp')
+data_service = DataService(db)
+agent_service = AgentService()
+
+
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = 'your-secret-key-here'
