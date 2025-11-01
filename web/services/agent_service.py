@@ -14,7 +14,13 @@ class AgentService:
         }
 
     def call_agent(self, dir : str, analysis_type : str):
-        """Вызов агента"""
+        """Вызов агента
+        Args:
+            dir (str): директория с файлами
+            analysis_type (str): тип анализа
+        Returns:
+            dict: ответ агента
+        """
         init_state = AgentState(
                 inp_file_dir=dir,
                 queries = self.analysis_type[analysis_type]['queries'],

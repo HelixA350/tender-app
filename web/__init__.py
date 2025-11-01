@@ -11,6 +11,8 @@ from web.services import FileService, DataService, AgentService
 file_service = FileService(r'web\tmp')
 data_service = DataService(db)
 agent_service = AgentService()
+from web.services.request_handler_service import HandlerService
+handler = HandlerService()
 
 
 def create_app():

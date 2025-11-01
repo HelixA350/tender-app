@@ -32,6 +32,8 @@ class DataService:
             analysis_type: тип анализа
             file_paths: пути к файлам
             response: ответ от агента
+        Returns:
+            id: id записи в БД об анализе
         """
         analysis_type = self.analysis_type.get(analysis_type)
         if not analysis_type:
@@ -61,5 +63,6 @@ class DataService:
             )
             self.db.session.add(new_response)
             self.db.session.commit()
+            return new_analysis.id
         except:
             raise DBError('Ошибка при записи данных в БД')

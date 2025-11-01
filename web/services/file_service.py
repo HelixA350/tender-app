@@ -29,7 +29,7 @@ class FileService:
         Args:
             files: str
             Список файлов
-        Output:
+        Returns:
             dir: str
             Путь к директории с сохраненными файлами
         """
