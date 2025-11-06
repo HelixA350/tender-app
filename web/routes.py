@@ -34,7 +34,12 @@ ERROR_MESSAGES = {
 @login_required
 def index():
     """Главная страница"""
-    return render_template('submit.html')
+    requests = views.handle_index(current_user)
+    return render_template('submit.html',
+                           current_user=current_user,
+                           user_requests=requests,
+                           active_request_id=None,
+                           )
 
 @bp.post('/')
 @login_required

@@ -8,148 +8,186 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Загрузите документы для анализа</h1>
-    <form id="tenderForm" method="POST" enctype="multipart/form-data">
-      <div class="form-group">
-        <label for="analysisType">Тип анализа</label>
-        <select id="analysisType" name="analysis_type" required>
-          <option value="" disabled selected>Выберите тип анализа</option>
-          <option value="tz">Анализ технического задания (ТЗ)</option>
-        </select>
+  
+
+  <div class="layout">
+    <!-- Гамбургер-кнопка -->
+     <button class="hamburger" id="hamburger">
+        <i class="fas fa-bars"></i>
+      </button>
+    
+    <!-- Боковое меню -->
+    <aside class="sidebar" id="sidebar">
+      
+      <div class="user-info">
+        <p><i class="fas fa-user avatar"></i>{{ current_user.name if current_user and current_user.name else 'Гость' }}</p>
       </div>
 
-      <div class="form-group">
-        <label>Файлы (поддерживаются PDF, DOCX, TXT)</label>
-        <div class="file-upload-area" id="fileUploadArea">
-          <i class="fas fa-cloud-upload-alt"></i>
-          <div class="file-upload-text">
-            <h3>Перетащите файлы сюда</h3>
-            <p>или</p>
+      <div class="history-section">
+        <div class="history-title">История запросов</div>
+        {% if active_request_id is none %}
+          <div class="new-request-indicator">
+            <i class="fas fa-info-circle"></i>
+            Вы создаёте новый запрос
           </div>
-          <div class="file-upload-button">Выберите файлы</div>
-          <input type="file" id="files" class="file-input" name="files" multiple accept=".pdf, .docx, .txt" required />
-        </div>
-        
-        <div class="selected-files" id="selectedFiles" style="display: none;">
-          <h3>Выбранные файлы:</h3>
-          <ul class="file-list" id="fileList"></ul>
-        </div>
+        {% endif %}
+        {% if user_requests and user_requests|length > 0 %}
+          <ul class="history-list">
+            {% for req in user_requests %}
+              <li class="history-item{% if active_request_id == req.id %} active{% endif %}">
+                <a href="{{ url_for('routes.report', analysis_id=req.id) }}">
+                  {{(req.files[0].file_name.rsplit("\\", 1)[-1])}}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>История пуста</p>
+        {% endif %}
       </div>
+    </aside>
 
-      <button type="submit" id="send-button">Анализировать</button>
-    </form>
+    <!-- Основной контент -->
+    <main class="main-content">
+      <div class="container">
+        <h1>Загрузите документы для анализа</h1>
+        <form id="tenderForm" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="analysisType">Тип анализа</label>
+            <select id="analysisType" name="analysis_type" required>
+              <option value="" disabled selected>Выберите тип анализа</option>
+              <option value="tz">Анализ технического задания (ТЗ)</option>
+            </select>
+          </div>
 
-      <!-- Область для отображения загрузки (ожидания ответа) -->
-    <div class="overlay" id="overlay">
-      <div class="loading-container" id="loading-container">
-          <div class="spinner"></div>
+          <div class="form-group">
+            <label>Файлы (поддерживаются PDF, DOCX, TXT)</label>
+            <div class="file-upload-area" id="fileUploadArea">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <div class="file-upload-text">
+                <h3>Перетащите файлы сюда</h3>
+                <p>или</p>
+              </div>
+              <div class="file-upload-button">Выберите файлы</div>
+              <input type="file" id="files" class="file-input" name="files" multiple accept=".pdf, .docx, .txt" required />
+            </div>
+
+            <div class="selected-files" id="selectedFiles" style="display: none;">
+              <h3>Выбранные файлы:</h3>
+              <ul class="file-list" id="fileList"></ul>
+            </div>
+          </div>
+
+          <button type="submit" id="send-button">Анализировать</button>
+        </form>
+
+        <div class="overlay" id="overlay">
+          <div class="loading-container" id="loading-container">
+            <div class="spinner"></div>
             <h1 class="loading-title">Загрузка</h1>
             <div class="loading-message" id="error-message">
-                ИИ агент находится в стадии разработки, из-за чего некоторые функции могут работать медленно. Время ожидания может достигать нескольких минут.
+              ИИ агент находится в стадии разработки, из-за чего некоторые функции могут работать медленно. Время ожидания может достигать нескольких минут.
             </div>
             <button class="loading-button" onclick="window.history.back()">Назад</button>
+          </div>
         </div>
-    </div>
-    
+      </div>
+    </main>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
+      const hamburger = document.getElementById('hamburger');
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+
+      // Открытие/закрытие меню
+      hamburger.addEventListener('click', function() {
+        sidebar.classList.toggle('open');
+        hamburger.classList.toggle('open');
+      });
+
+      // Закрытие меню при клике вне его (опционально)
+      document.addEventListener('click', function(e) {
+        if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+          sidebar.classList.remove('open');
+        hamburger.classList.remove('open');
+        }
+      });
+
+      // Остальной JavaScript без изменений
       const fileInput = document.getElementById('files');
       const fileUploadArea = document.getElementById('fileUploadArea');
       const selectedFiles = document.getElementById('selectedFiles');
       const fileList = document.getElementById('fileList');
       const sendButton = document.getElementById('send-button');
       const loadingContainer = document.getElementById('loading-container');
-      const overlay = document.getElementById('overlay');
       const analysisType = document.getElementById('analysisType');
 
-      // Открытие Popup с загрузкой при отправке формы
       sendButton.addEventListener('click', function(e) {
-        if (fileInput.files.length != 0 && analysisType.value) {
+        if (fileInput.files.length !== 0 && analysisType.value) {
           loadingContainer.style.display = 'block';
           overlay.style.display = 'flex';
+        } else {
+          e.preventDefault();
+          alert('Пожалуйста, выберите файлы и тип анализа.');
         }
-
       });
-      
-      // Обработчик клика по области загрузки
+
       fileUploadArea.addEventListener('click', function() {
         fileInput.click();
       });
-      
-      // Обработчик изменения выбранных файлов
+
       fileInput.addEventListener('change', function() {
         updateFileList();
       });
-      
-      // Обработчики для drag & drop
+
       fileUploadArea.addEventListener('dragover', function(e) {
         e.preventDefault();
         fileUploadArea.classList.add('dragover');
       });
-      
+
       fileUploadArea.addEventListener('dragleave', function() {
         fileUploadArea.classList.remove('dragover');
       });
-      
+
       fileUploadArea.addEventListener('drop', function(e) {
         e.preventDefault();
         fileUploadArea.classList.remove('dragover');
-        
         if (e.dataTransfer.files.length) {
           fileInput.files = e.dataTransfer.files;
           updateFileList();
         }
       });
-      
-      // Функция обновления списка файлов
+
       function updateFileList() {
         fileList.innerHTML = '';
-        
         if (fileInput.files.length === 0) {
           selectedFiles.style.display = 'none';
           return;
         }
-        
         selectedFiles.style.display = 'block';
-        
         for (let i = 0; i < fileInput.files.length; i++) {
           const file = fileInput.files[i];
           const listItem = document.createElement('li');
           listItem.className = 'file-item';
-          
-          // Определяем иконку в зависимости от типа файла
           let fileIcon = 'fa-file';
-          if (file.name.toLowerCase().endsWith('.pdf')) {
-            fileIcon = 'fa-file-pdf';
-          } else if (file.name.toLowerCase().endsWith('.docx')) {
-            fileIcon = 'fa-file-word';
-          } else if (file.name.toLowerCase().endsWith('.txt')) {
-            fileIcon = 'fa-file-alt';
-          }
-          
-          // Форматируем размер файла
+          if (file.name.toLowerCase().endsWith('.pdf')) fileIcon = 'fa-file-pdf';
+          else if (file.name.toLowerCase().endsWith('.docx')) fileIcon = 'fa-file-word';
+          else if (file.name.toLowerCase().endsWith('.txt')) fileIcon = 'fa-file-alt';
+
           const fileSize = formatFileSize(file.size);
-          
           listItem.innerHTML = `
-            <div class="file-icon">
-              <i class="fas ${fileIcon}"></i>
-            </div>
+            <div class="file-icon"><i class="fas ${fileIcon}"></i></div>
             <div class="file-info">
               <div class="file-name">${file.name}</div>
               <div class="file-size">${fileSize}</div>
             </div>
-            <div class="file-remove" data-index="${i}">
-              <i class="fas fa-times"></i>
-            </div>
+            <div class="file-remove" data-index="${i}"><i class="fas fa-times"></i></div>
           `;
-          
           fileList.appendChild(listItem);
         }
-        
-        // Добавляем обработчики для кнопок удаления
+
         document.querySelectorAll('.file-remove').forEach(button => {
           button.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -158,30 +196,22 @@
           });
         });
       }
-      
-      // Функция удаления файла из списка
+
       function removeFile(index) {
         const dt = new DataTransfer();
         const files = fileInput.files;
-        
         for (let i = 0; i < files.length; i++) {
-          if (i !== index) {
-            dt.items.add(files[i]);
-          }
+          if (i !== index) dt.items.add(files[i]);
         }
-        
         fileInput.files = dt.files;
         updateFileList();
       }
-      
-      // Функция форматирования размера файла
+
       function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
-        
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
       }
     });

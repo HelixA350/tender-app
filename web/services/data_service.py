@@ -1,5 +1,6 @@
 from web.models import *
 import json
+import os
 
 # - Кастомные ошибки -
 class InvalidAnalysisTypeError(Exception):
@@ -93,3 +94,6 @@ class DataService:
         analysis = Analysis.query.first_or_404(analysis_id)
         res = analysis.result.final_response
         return json.loads(res)
+    
+    def get_user_requests(self, user):
+        return Analysis.query.filter_by(user_id=user.id).all()

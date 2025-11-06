@@ -93,3 +93,6 @@ class Views:
             return data_service.get_report(id)
         else:
             raise NoReportError('Нет отчета с таким ID')
+        
+    def handle_index(self, user):
+        return data_service.get_user_requests(user)
