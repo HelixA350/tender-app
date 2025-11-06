@@ -178,7 +178,7 @@
   downloadBtn.addEventListener('click', async () => {
     if (wasFeedbackSent) {
       const { jsPDF } = window.jspdf;
-      const element = resultContainer; // или любой другой контейнер
+      const element = resultContainer;
 
       const canvas = await html2canvas(element);
       const imgData = canvas.toDataURL('image/png');

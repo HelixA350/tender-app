@@ -1,6 +1,6 @@
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from web.models import Analysis, File, AnalysisResult, Feedback
+from web.models import Analysis, File, AnalysisResult, Feedback, User
 from flask_admin.theme import Bootstrap4Theme
 from markupsafe import Markup
 
@@ -18,10 +18,11 @@ def truncate_with_expand(text, max_length=100):
     )
 
 class MainView(ModelView):
-    column_list =['id', 'Файлы', 'Тип анализа', 'Результат', 'Обратная связь (оценка)', 'Обратная связь (сообщение)']
-    column_select_related_list = [Analysis.files, Analysis.feedback, Analysis.result]
+    column_list =['id', 'Пользователь', 'Файлы', 'Тип анализа', 'Результат', 'Обратная связь (оценка)', 'Обратная связь (сообщение)']
+    column_select_related_list = [Analysis.user, Analysis.files, Analysis.feedback, Analysis.result]
     can_export = True
     column_formatters = {
+        'Пользователь': lambda v, c, m, p: m.user.name if m.user else '',
         'Файлы': lambda v, c, m, p: ', '.join(f.file_name for f in m.files) if m.files else '',
         'Тип анализа': lambda v, c, m, p: m.analysis_type if m else '',
         'Результат': lambda v, c, m, p: truncate_with_expand(m.result.final_response) if m.result else '',
@@ -44,6 +45,7 @@ def init_admin(app, db):
     )
     admin.add_view(MainView(Analysis, db.session, 'Все данные'))
     admin.add_views(
+        ModelView(User, db.session, 'Пользователи'),
         ModelView(File, db.session, 'Файлы'),
         ModelView(AnalysisResult, db.session, 'Результаты'),
         ModelView(Feedback, db.session, 'Отзывы')

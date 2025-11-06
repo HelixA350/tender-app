@@ -2,6 +2,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_admin import Admin
+from flask_login import LoginManager
 
 db = SQLAlchemy()
 admin = Admin()
@@ -11,8 +12,8 @@ from web.services import FileService, DataService, AgentService
 file_service = FileService(r'web\tmp')
 data_service = DataService(db)
 agent_service = AgentService()
-from web.services.request_handler_service import HandlerService
-handler = HandlerService()
+from web.views import Views
+views = Views()
 
 
 def create_app():
@@ -22,6 +23,15 @@ def create_app():
 
     db.init_app(app)
     migrate = Migrate(app, db)
+
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'routes.login'
+
+    from web.models import User
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
 
     from web.routes import bp
     app.register_blueprint(bp)

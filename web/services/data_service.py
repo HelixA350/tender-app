@@ -1,4 +1,5 @@
 from web.models import *
+import json
 
 # - Кастомные ошибки -
 class InvalidAnalysisTypeError(Exception):
@@ -24,7 +25,8 @@ class DataService:
         self,
         analysis_type: str,
         file_paths: list,
-        response: dict
+        response: dict,
+        user: User
     ):
         """
         Запись данных о результатах работы
@@ -32,6 +34,7 @@ class DataService:
             analysis_type: тип анализа
             file_paths: пути к файлам
             response: ответ от агента
+            user: пользователь, объект User
         Returns:
             id: id записи в БД об анализе
         """
@@ -46,6 +49,7 @@ class DataService:
         try:
             new_analysis = Analysis(
                 analysis_type=analysis_enum,
+                user_id=user.id,
             )
             self.db.session.add(new_analysis)
             self.db.session.flush()
@@ -58,7 +62,7 @@ class DataService:
                     )
                     self.db.session.add(new_file)
             new_response = AnalysisResult(
-                final_response=str(response),
+                final_response=json.dumps(response, ensure_ascii=False),
                 analysis_id=new_analysis.id
             )
             self.db.session.add(new_response)
@@ -84,3 +88,8 @@ class DataService:
             self.db.session.commit()
         except:
             raise DBError('Ошибка при записи данных в БД')
+        
+    def get_report(self, analysis_id):
+        analysis = Analysis.query.first_or_404(analysis_id)
+        res = analysis.result.final_response
+        return json.loads(res)

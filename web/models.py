@@ -1,5 +1,7 @@
 from web import db
 from enum import Enum
+from flask_login import UserMixin
+from sqlalchemy import JSON
 
 
 class AnalysisType(Enum):
@@ -13,14 +15,30 @@ class FeedbackMessages(Enum):
     hallucinated = "hallucinated"
     other = "other"
 
+class User(UserMixin, db.Model):
+    __tablename__ = 'user'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False, unique=True)
+    password = db.Column(db.String(255), nullable=False)
+
+    # One-to-many: one User many Analysis
+    analysis = db.relationship('Analysis', back_populates='user', cascade='all, delete-orphan')
+
+    def check_password(self, password):
+        if self.password == password:
+            return True
+        else:
+            return False
+
 
 class Analysis(db.Model):
     __tablename__ = 'analysis'
 
     id = db.Column(db.Integer, primary_key=True)
-    analysis_type = db.Column(db.Enum(AnalysisType), nullable=True)
+    analysis_type = db.Column(db.Enum(AnalysisType), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
-    # One-to-many: one Analysis can have many Files
+    # One-to-many: one Analysis many Files
     files = db.relationship('File', back_populates='analysis', cascade='all, delete-orphan')
 
     # One-to-one: one Analysis has one AnalysisResult
@@ -28,6 +46,8 @@ class Analysis(db.Model):
 
     # One-to-one: one Analysis has one Feedback
     feedback = db.relationship('Feedback', back_populates='analysis', uselist=False, cascade='all, delete-orphan')
+
+    user = db.relationship('User', back_populates='analysis')
 
 
 class File(db.Model):
@@ -45,7 +65,7 @@ class AnalysisResult(db.Model):
     __tablename__ = 'analysis_result'
 
     id = db.Column(db.Integer, primary_key=True)
-    final_response = db.Column(db.String(10000))
+    final_response = db.Column(JSON)
     # TODO: Добавить то какие фрагменты были извлечены для ответа
 
     analysis_id = db.Column(db.Integer, db.ForeignKey('analysis.id'), nullable=False)

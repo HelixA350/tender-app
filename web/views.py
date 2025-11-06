@@ -1,5 +1,8 @@
 from web import file_service, agent_service, data_service
 import os
+from web.models import User
+from flask import redirect, url_for
+from flask_login import login_user
 
 # - Ошибки -
 class NoAnalysisTypeError(Exception):
@@ -11,11 +14,23 @@ class NoFilesError(Exception):
 class MissingFeedbackFieldsError(Exception):
     pass
 
-class HandlerService:
+class NoNameError(Exception):
+    pass
+
+class NoPasswordError(Exception):
+    pass
+
+class NoUserError(Exception):
+    pass
+
+class NoReportError(Exception):
+    pass
+
+class Views:
     def __init__(self):
         pass
 
-    def handle_form_submission(self, request):
+    def handle_form_submission(self, request, user):
         """Обработка отправки формы
         Args:
             request: Запрос
@@ -41,6 +56,7 @@ class HandlerService:
             analysis_type=analysis_type,
             file_paths=[os.path.join(file_dir, file.filename) for file in files],
             response=response,
+            user=user
         )
         return response, id
     
@@ -54,3 +70,26 @@ class HandlerService:
         else:
             data_service.record_feedback(analysis_id, overall, message)
         return None
+    
+    def handle_login(self, request):
+        name = request.form.get('name')
+        password = request.form.get('password')
+
+        # Проверяем правильность заполнения формы
+        if not name:
+            raise NoNameError('Нет имени')
+        if not password:
+            raise NoPasswordError('Нет пароля')
+        
+        user = User.query.filter_by(name=name).first()
+        if user and user.check_password(password):
+            login_user(user)
+        else:
+            raise NoUserError('Неверное имя или пароль')
+
+
+    def get_report(self, id):
+        if id:
+            return data_service.get_report(id)
+        else:
+            raise NoReportError('Нет отчета с таким ID')
