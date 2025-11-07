@@ -13,18 +13,24 @@ views = Views()
 def index():
     """Главная страница"""
     requests = views.handle_index_view(current_user)
-    return render_template('submit.html',
-                           current_user=current_user,
-                           user_requests=requests,
-                           active_request_id=None,
-                           )
+    return render_template(
+        'submit.html',
+        current_user=current_user,
+        user_requests=requests,
+        active_request_id=None,
+    )
 
 @bp.post('/')
 @login_required
 def submit():
     """Обработка формы"""
     response, id, history = views.handle_form_submission(request, current_user)
-    return render_template('results.html', analysis_results=response, analysis_id=id, user_requests=history)
+    return render_template(
+        'results.html', 
+        analysis_results=response, 
+        analysis_id=id, 
+        user_requests=history
+    )
 
 @bp.post('/feedback')
 @login_required
@@ -50,6 +56,11 @@ def login():
 def report(analysis_id):
     """Получить отчет по анализу из истории"""
     results, requests = views.handle_report_view(analysis_id, current_user)
-    return render_template('results.html', analysis_results=results, analysis_id=analysis_id, user_requests=requests)
+    return render_template(
+        'results.html', 
+        analysis_results=results, 
+        analysis_id=analysis_id, 
+        user_requests=requests
+    )
 
     

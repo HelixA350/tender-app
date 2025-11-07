@@ -9,7 +9,7 @@ from flask_login import login_required, current_user
 
 error_bp = Blueprint('errors', __name__)
 
-# - Ошибки -
+# --- Ошибки ---
 class NoAnalysisTypeError(Exception):
     pass
 class NoFilesError(Exception):
