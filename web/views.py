@@ -1,30 +1,9 @@
 from web import file_service, agent_service, data_service
 import os
 from web.models import User
-from flask import redirect, url_for
+from flask import session
 from flask_login import login_user
-
-# - Ошибки -
-class NoAnalysisTypeError(Exception):
-    pass
-
-class NoFilesError(Exception):
-    pass
-
-class MissingFeedbackFieldsError(Exception):
-    pass
-
-class NoNameError(Exception):
-    pass
-
-class NoPasswordError(Exception):
-    pass
-
-class NoUserError(Exception):
-    pass
-
-class NoReportError(Exception):
-    pass
+from web.errors import *
 
 class Views:
     def __init__(self):
@@ -35,8 +14,7 @@ class Views:
         Args:
             request: Запрос
         Returns:
-            response: Ответ
-            id: ID записи об анализе в БД
+            tuple: Ответ агента, ID записи в БД, история запросов пользователя
         """
         # Получаем данные из формы
         analysis_type = request.form.get('analysis_type')
@@ -58,9 +36,21 @@ class Views:
             response=response,
             user=user
         )
-        return response, id
+
+        # Добавляем запрос в историю запросов пользователя в сессии
+        session['user_requests'].append({
+            'id': f'{id}',
+            'name': os.path.basename(str(files[0].filename))
+        })
+
+        history = session.get('user_requests')
+        return response, id, history
     
     def handle_feedback_submit(self, request):
+        """Обработка формы обратной связи
+        Args:
+            request: Запрос, Flask request
+        """
         data = request.get_json()
         overall = data.get('overall')
         message = data.get('message')
@@ -72,6 +62,10 @@ class Views:
         return None
     
     def handle_login(self, request):
+        """Обработка формы авторизации
+        Args:
+            request: Запрос, Flask request
+        """
         name = request.form.get('name')
         password = request.form.get('password')
 
@@ -88,11 +82,32 @@ class Views:
             raise NoUserError('Неверное имя или пароль')
 
 
-    def get_report(self, id):
-        if id:
-            return data_service.get_report(id)
-        else:
+    def handle_report_view(self, id, user):
+        """Получение отчета из истории запросов
+        Args:
+            id: ID записи об анализе в БД
+        Returns:
+            Значение поля final_response в объекте AnalysisResult, привянном к объекту Analysis
+        """
+        try:
+            history = session.get('user_requests')
+            report = data_service.get_report(id)
+            print(id)
+            return report, history
+        except:
             raise NoReportError('Нет отчета с таким ID')
         
-    def handle_index(self, user):
-        return data_service.get_user_requests(user)
+    def handle_index_view(self, user):
+        """Получение истории запросов пользователя для отрисовки на главной странице
+        При выполнении этого запроса обновляется список запросов пользователя в сессии
+        Args:
+            user: Пользователь
+        Returns:
+            Список запросов пользователя, объекты Analysis
+        """
+        analysis = data_service.get_user_requests(user)
+        analysis = session['user_requests'] = [{
+            'id': str(a.id),
+            'name': os.path.basename(str(a.files[0].file_name))
+        } for a in analysis]
+        return analysis

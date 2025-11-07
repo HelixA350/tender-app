@@ -91,9 +91,14 @@ class DataService:
             raise DBError('Ошибка при записи данных в БД')
         
     def get_report(self, analysis_id):
-        analysis = Analysis.query.first_or_404(analysis_id)
+        """Получение объекта Analysis по его id
+        """
+        analysis = Analysis.query.filter_by(id=analysis_id).first()
+        print(analysis_id)
         res = analysis.result.final_response
         return json.loads(res)
     
     def get_user_requests(self, user):
+        """Получение списка объектов Analysis по id пользователя
+        """
         return Analysis.query.filter_by(user_id=user.id).all()

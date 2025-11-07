@@ -8,88 +8,133 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-  <div class="container" id="result">
-    <h1><i class="fas fa-chart-bar"></i> Результаты анализа тендера</h1>
+  <div class="layout">
+
     
-    <div class="section">
-      <div class="section-title">
-        <i class="fas fa-info-circle"></i> Основная информация
-      </div>
+    <div class="top-info">
+      <!-- Гамбургер-кнопка -->
+      <button class="hamburger" id="hamburger">
+        <i class="fas fa-bars"></i>
+      </button>
+
+      <!-- Боковое меню -->
+      <aside class="sidebar" id="sidebar">
       
-      <div class="field">
-        <div class="field-label">Тип тендера</div>
-        <div class="field-value">{{ analysis_results.tender_type or "Не указано" }}</div>
-      </div>
+        <div class="user-info">
+          <p><i class="fas fa-user avatar"></i>{{ current_user.name if current_user and current_user.name else 'Гость' }}</p>
+        </div>
+        
       
-      <div class="field">
-        <div class="field-label">Бюджет</div>
-        <div class="field-value">{{ analysis_results.budget or "Не указано" }}</div>
+
+      <div class="history-section">
+        <a href="/" class="button new-btn">
+            <i class="fas fa-plus"></i> Новый анализ
+          </a>
+        <div class="history-title">История запросов</div>
+          
+        {% if user_requests and user_requests|length > 0 %}
+          <ul class="history-list">
+            {% for req in user_requests %}
+              <li class="history-item{% if active_request_id == req.id %} active{% endif %}">
+                <a href="{{ url_for('routes.report', analysis_id=req['id']) }}">
+                  {{(req['name'])}}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>История пуста</p>
+        {% endif %}
       </div>
-      
-      <div class="field">
-        <div class="field-label">Сроки выполнения</div>
-        <div class="field-value">{{ analysis_results.deadlines or "Не указано" }}</div>
-      </div>
+    </aside>
+
     </div>
-    
-    <div class="section">
-      <div class="section-title">
-        <i class="fas fa-list-check"></i> Ключевые требования
-      </div>
-      
-      {% if analysis_results.key_requirements %}
-        {% for requirement in analysis_results.key_requirements %}
-          <div class="list-item">{{ requirement }}</div>
-        {% endfor %}
-      {% else %}
-        <div class="field-value">Требования не указаны</div>
-      {% endif %}
-    </div>
-    
-    <div class="section">
-      <div class="section-title">
-        <i class="fas fa-cogs"></i> Технические спецификации
-      </div>
-      
-      {% if analysis_results.technical_specs %}
-        {% for spec in analysis_results.technical_specs %}
-          <div class="list-item">{{ spec }}</div>
-        {% endfor %}
-      {% else %}
-        <div class="field-value">Технические спецификации не указаны</div>
-      {% endif %}
-    </div>
-    
-    <!-- Динамические поля - для любых других данных, которые могут прийти -->
-    {% for key, value in analysis_results.items() %}
-      {% if key not in ['tender_type', 'budget', 'deadlines', 'key_requirements', 'technical_specs'] %}
+
+    <!-- Основной контент -->
+      <div class="container" id="result">
+        <h1><i class="fas fa-chart-bar"></i> Результаты анализа тендера</h1>
+        
         <div class="section">
           <div class="section-title">
-            <i class="fas fa-file-alt"></i> {{ key|replace('_', ' ')|title }}
+            <i class="fas fa-info-circle"></i> Основная информация
           </div>
           
-          {% if value is string %}
-            <div class="field-value">{{ value or "Не указано" }}</div>
-          {% elif value is iterable and value is not string %}
-            {% for item in value %}
-              <div class="list-item">{{ item }}</div>
+          <div class="field">
+            <div class="field-label">Тип тендера</div>
+            <div class="field-value">{{ analysis_results.tender_type or "Не указано" }}</div>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">Бюджет</div>
+            <div class="field-value">{{ analysis_results.budget or "Не указано" }}</div>
+          </div>
+          
+          <div class="field">
+            <div class="field-label">Сроки выполнения</div>
+            <div class="field-value">{{ analysis_results.deadlines or "Не указано" }}</div>
+          </div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">
+            <i class="fas fa-list-check"></i> Ключевые требования
+          </div>
+          
+          {% if analysis_results.key_requirements %}
+            {% for requirement in analysis_results.key_requirements %}
+              <div class="list-item">{{ requirement }}</div>
             {% endfor %}
           {% else %}
-            <div class="field-value">{{ value or "Не указано" }}</div>
+            <div class="field-value">Требования не указаны</div>
           {% endif %}
         </div>
-      {% endif %}
-    {% endfor %}
-    
-    <div class="actions">
-      <a href="/" class="btn btn-primary">
-        <i class="fas fa-arrow-left"></i> Новый анализ
-      </a>
-      <button class="btn btn-secondary" id="download">
-        <i class="fas fa-download"></i> Скачать отчет
-      </button>
-    </div>
+        
+        <div class="section">
+          <div class="section-title">
+            <i class="fas fa-cogs"></i> Технические спецификации
+          </div>
+          
+          {% if analysis_results.technical_specs %}
+            {% for spec in analysis_results.technical_specs %}
+              <div class="list-item">{{ spec }}</div>
+            {% endfor %}
+          {% else %}
+            <div class="field-value">Технические спецификации не указаны</div>
+          {% endif %}
+        </div>
+        
+        <!-- Динамические поля - для любых других данных, которые могут прийти -->
+        {% for key, value in analysis_results.items() %}
+          {% if key not in ['tender_type', 'budget', 'deadlines', 'key_requirements', 'technical_specs'] %}
+            <div class="section">
+              <div class="section-title">
+                <i class="fas fa-file-alt"></i> {{ key|replace('_', ' ')|title }}
+              </div>
+              
+              {% if value is string %}
+                <div class="field-value">{{ value or "Не указано" }}</div>
+              {% elif value is iterable and value is not string %}
+                {% for item in value %}
+                  <div class="list-item">{{ item }}</div>
+                {% endfor %}
+              {% else %}
+                <div class="field-value">{{ value or "Не указано" }}</div>
+              {% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+        
+        <div class="actions">
+          <a href="/" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Новый анализ
+          </a>
+          <button class="btn btn-secondary" id="download">
+            <i class="fas fa-download"></i> Скачать отчет
+          </button>
+        </div>
+      </div>
   </div>
+
 
   <!-- Форма обратной связи -->
   <div class="overlay" id="overlay">
@@ -133,6 +178,22 @@
   const analysisId = document.getElementById('app-data').dataset.analysisId;
   const resultContainer = document.getElementById('result');
   let wasFeedbackSent = false;
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+
+  // Открытие/закрытие меню
+  hamburger.addEventListener('click', function() {
+    sidebar.classList.toggle('open');
+    hamburger.classList.toggle('open');
+  });
+
+  // Закрытие меню при клике вне его (опционально)
+  document.addEventListener('click', function(e) {
+    if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+      sidebar.classList.remove('open');
+    hamburger.classList.remove('open');
+    }
+  });
 
   // Выводим форму обратной связи
   function showFeedbackForm() {

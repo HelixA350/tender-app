@@ -35,8 +35,8 @@
           <ul class="history-list">
             {% for req in user_requests %}
               <li class="history-item{% if active_request_id == req.id %} active{% endif %}">
-                <a href="{{ url_for('routes.report', analysis_id=req.id) }}">
-                  {{(req.files[0].file_name.rsplit("\\", 1)[-1])}}
+                <a href="{{ url_for('routes.report', analysis_id=req['id']) }}">
+                  {{(req['name'])}}
                 </a>
               </li>
             {% endfor %}

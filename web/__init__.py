@@ -12,9 +12,6 @@ from web.services import FileService, DataService, AgentService
 file_service = FileService(r'web\tmp')
 data_service = DataService(db)
 agent_service = AgentService()
-from web.views import Views
-views = Views()
-
 
 def create_app():
     app = Flask(__name__)
@@ -34,7 +31,9 @@ def create_app():
         return User.query.get(int(user_id))
 
     from web.routes import bp
+    from web.errors import error_bp
     app.register_blueprint(bp)
+    app.register_blueprint(error_bp)
 
     from web.admin import init_admin
     init_admin(app, db)

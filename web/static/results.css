@@ -260,3 +260,176 @@ h1 {
         font-size: 15px;
       }
     }
+
+button {
+width: 100%;
+background-color: #667eea;
+color: white;
+border: none;
+border-radius: 10px;
+font-size: 18px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s;
+box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+button:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+button:active {
+transform: translateY(0);
+}
+
+.button {
+width: 100%;
+background-color: #667eea;
+color: white;
+border: none;
+border-radius: 10px;
+font-size: 18px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.3s;
+box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+.button:hover {
+transform: translateY(-2px);
+box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+.button:active {
+transform: translateY(0);
+}
+
+
+/* Стили для бокового меню */
+.layout {
+    display: flex;
+}
+
+/* Гамбургер-кнопка */
+.hamburger {
+    width: 56px;
+    height: 56px;
+    position: fixed;
+    left: 20px;
+    top: 20px;
+    z-index: 1000;
+}
+
+.hamburger.open {
+    left: 204px;
+    box-shadow: none;
+    background-color: white;
+    color: black;
+    top: 10px;
+}
+
+/* Боковое меню — теперь overlay */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px; 
+    width: 280px;
+    height: 100vh;
+    background-color: #ffffff;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 999;
+    transition: left 0.3s ease;
+    
+}
+
+.sidebar.open {
+    left: 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+}
+
+.new-btn {
+    font-weight: 600;
+    text-align: start;
+    padding: 10px 16px;
+    text-decoration: none;
+    min-width: 100%;
+}
+
+.top-info {
+    position: absolute;
+}
+
+/* Основной контент — не зависит от сайдбара */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Стили пользовательской информации и истории — без изменений */
+.user-info {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.history-title {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-top: 20px;
+    margin-bottom: 12px;
+    color: #555;
+}
+
+.history-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.history-item {
+    padding: 8px 0;
+}
+
+.history-item a {
+    text-decoration: none;
+    color: #007bff;
+    display: block;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+.history-item a:hover {
+    background-color: #e9ecef;
+}
+
+.history-item.active a {
+    background-color: #007bff;
+    color: white;
+}
+
+.new-request-indicator {
+    margin-top: 16px;
+    padding: 10px;
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #856404;
+}
+
+.avatar {
+    margin: 8px;
+}
+
+/* Адаптив: показываем гамбургер на мобильных и малых экранах */
+@media (max-width: 768px) {
+    .hamburger {
+    display: block;
+    }
+
+    .sidebar {
+    left: -280px;
+    }
+}
